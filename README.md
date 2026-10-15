@@ -37,7 +37,9 @@ metterai la dispensa di una materia.
 > - **Materiale e copyright.** I PDF in `raw/` restano solo sul tuo computer (git
 >   li ignora). La dispensa che ottieni è una trascrizione di contenuti del
 >   professore: se pubblichi il tuo repo, tienilo **privato** o assicurati di
->   poter condividere quel contenuto.
+>   poter condividere quel contenuto. Il template è sotto licenza MIT e non
+>   contiene materiale di corsi: chi lo usa è l'unico responsabile del materiale
+>   che vi inserisce e di come lo distribuisce.
 
 > ⚠️ **Non rendere mai pubblico il repo di una materia** (questo template, che è
 > vuoto, sì; la tua copia con le lezioni no). Contiene (o conterrà)

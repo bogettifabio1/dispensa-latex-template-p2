@@ -15,6 +15,13 @@ a lezione? lavagna? solo tuoi appunti?) e istruisce di conseguenza gli script;
 contiene già le regole di sistema pronte). Poi si aggiungono le lezioni una
 alla volta.
 
+Questo repo è un **template repository** pubblico di GitHub: non contiene
+materiale di nessun corso, solo lo scheletro. Per usarlo premi **Use this
+template ▸ Create a new repository** (vedi «Scarica il progetto»): ottieni un
+repo **tuo e indipendente**, senza la storia dei commit e senza legame con
+l'originale (non è un fork, non ha un upstream). Crealo **privato**: è lì che
+metterai la dispensa di una materia.
+
 > **Progetto amatoriale e sperimentale.** Nato per trascrivere le dispense di un
 > corso, è offerto così com'è, senza garanzie: può avere spigoli e ti chiediamo
 > di dircelo (vedi «Feedback» in fondo).
@@ -32,7 +39,8 @@ alla volta.
 >   professore: se pubblichi il tuo repo, tienilo **privato** o assicurati di
 >   poter condividere quel contenuto.
 
-> ⚠️ **Non rendere mai pubblico il repo di una materia.** Contiene (o conterrà)
+> ⚠️ **Non rendere mai pubblico il repo di una materia** (questo template, che è
+> vuoto, sì; la tua copia con le lezioni no). Contiene (o conterrà)
 > lezioni trascritte dal materiale del professore e il `CLAUDE.md` con il suo
 > profilo: sono contenuti coperti da copyright, e una richiesta di rimozione
 > arriverebbe a te. Non togliere `raw/` dal `.gitignore` e non usare
@@ -459,7 +467,8 @@ bollino in più che una formula sbagliata mimetizzata nel testo.
 - Non sistemare l'impaginazione durante la scrittura: solo a dispensa completa
   (vedi `CLAUDE.md`).
 - Il template può ricevere migliorie: ogni tanto guarda la pagina GitHub del
-  progetto. Aggiornare la tua copia **non è automatico** (hai modificato
+  progetto. Poiché la tua copia nasce da «Use this template», non è collegata
+  all'originale: aggiornarla **non è automatico** (hai modificato
   `CLAUDE.md`, `master.tex`, `lezioni/`): se c'è una novità che ti serve,
   chiedi a Claude Code di riportarla nella tua copia senza toccare il tuo
   materiale.

@@ -1,0 +1,10 @@
+# Normalizza i fine riga: LF nel repository, nativi nella working copy
+* text=auto
+
+*.tex text
+*.md text
+*.sh  text eol=lf
+*.ps1 text eol=crlf
+
+*.pdf binary
+*.png binary

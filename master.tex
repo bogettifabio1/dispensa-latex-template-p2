@@ -1,0 +1,53 @@
+\documentclass[oneside,11pt]{book} % lettura digitale; per la stampa -> twoside
+
+\input{preamble}
+
+\title{Appunti di \textit{(nome del corso)}}
+\author{(autore)}
+\date{\the\year}
+
+\begin{document}
+% \frontmatter: numerazione romana (i, ii, ...) per titolo e indici. Serve anche
+% a evitare il warning hyperref "duplicate destination page.1": senza, la pagina
+% del titolo e il primo capitolo sarebbero entrambi "pagina 1" in numeri arabi.
+\frontmatter
+\maketitle
+\tableofcontents
+\newpage
+
+% --- Secondo indice: elenco delle lezioni, con link al punto d'inizio ---
+\phantomsection
+\pdfbookmark[0]{Indice delle lezioni}{loz}
+\listoflezioni
+
+% \mainmatter: numerazione araba (1, 2, ...) che riparte dal primo capitolo.
+\mainmatter
+
+% =========================================================================
+% ORGANIZZAZIONE IN CAPITOLI
+%
+% Convenzione: \chapter = macroargomento del corso, \section = lezione.
+% Ogni file in lezioni/ e' un frammento (inizia con \section{...}), NON un
+% documento a se': va sotto il \chapter del macroargomento a cui appartiene.
+% Se una lezione copre due macroargomenti va spezzata in due file, ciascuno
+% sotto il proprio \chapter.
+% Aggiungi una riga \input{} ogni volta che new_lecture.sh genera una lezione.
+%
+% Conviene abbozzare qui i \chapter dei macroargomenti del corso (p.es.
+% seguendo l'indice del libro di riferimento), lasciando commentati quelli
+% non ancora iniziati: quando arriva una lezione nuova si scommenta il
+% capitolo giusto e si aggiunge l'\input, invece di inventarne uno nuovo.
+% E' una guida, non un vincolo: se il professore tratta un argomento in un
+% ordine che non ci sta dentro, si adatta.
+%
+% Schema di partenza (da personalizzare per il corso):
+%
+% \chapter{Primo macroargomento}
+% \input{lezioni/lezione01}
+% \input{lezioni/lezione02}
+%
+% \chapter{Secondo macroargomento}
+% \input{lezioni/lezione03}
+% =========================================================================
+
+\end{document}

@@ -1,0 +1,189 @@
+% ==== preamble.tex — pacchetti e macro comuni, senza \documentclass ====
+% Incluso dal file master con \input{preamble}
+
+% --- Codifica e lingua (sillabazione italiana + lettere accentate) ---
+% Nota: niente \usepackage[utf8]{inputenc}: dal 2018 l'UTF-8 è la codifica di
+% default di LaTeX, e caricarlo a mano darebbe errore se un domani si passasse a
+% xelatex/lualatex. Con pdflatex (il flusso di questo template) non serve.
+\usepackage{lmodern} % Latin Modern: stesso disegno delle Computer Modern ma
+                     % vettoriale -> caratteri più nitidi a schermo e a stampa
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+
+% =========================================================================
+% LEGGIBILITÀ — le tre leve da toccare se il testo risulta faticoso.
+% Sono indipendenti dal contenuto: cambiarle non rompe nulla, cambia solo
+% l'impaginazione (e il numero di pagine).
+%
+%  1. CORPO DEL CARATTERE -> opzione del \documentclass in master.tex
+%     (attualmente 11pt; 12pt per un testo ancora più grande).
+%  2. LARGHEZZA DELLA RIGA -> i margini qui sotto. Righe troppo lunghe
+%     stancano perché l'occhio fatica a trovare l'inizio della riga dopo:
+%     l'ideale sta intorno ai 65-75 caratteri. Margini più larghi =
+%     riga più corta. Con 11pt e 3cm si è intorno ai ~75.
+%  3. INTERLINEA -> \setstretch più sotto (1 = default LaTeX, 1.15 =
+%     circa "interlinea 1.15" dei word processor, 1.5 = molto arioso).
+% =========================================================================
+
+% --- Layout pagina: A4 ---
+\usepackage[a4paper,
+            top=2.5cm, bottom=2.5cm,
+            left=3cm, right=3cm,
+            includeheadfoot, headsep=0.6cm]{geometry}
+
+% Interlinea (leva 3): 1.15 dà respiro senza sprecare pagine.
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Aria fra un paragrafo e il successivo: aiuta a distinguere i blocchi di
+% testo a colpo d'occhio. Metti 0pt per tornare al comportamento LaTeX.
+\setlength{\parskip}{0.35\baselineskip plus 0.1\baselineskip}
+
+% Giustificazione più uniforme: riduce gli spazi larghi fra le parole e le
+% sillabazioni, che è una causa nascosta di fatica nella lettura.
+\usepackage{microtype}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{mathrsfs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{amsthm}
+\usepackage{float}
+\usepackage{needspace} % \Needspace*{Nh}: evita titoli isolati a fine pagina
+\usepackage[most]{tcolorbox}
+\usepackage[normalem]{ulem}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{decorations.pathreplacing} % graffe: \draw[decorate, decoration={brace}]
+\usepackage{fancyhdr}
+% Nota: todonotes (con i marker \revisione e \figuramancante) va caricato DOPO
+% hyperref — vedi più in basso, subito dopo \usepackage{hyperref}.
+
+% =========================================================================
+% FIGURE — ancoraggio \figura{<chiave>}{<descrizione>}
+%
+% Cerca figure/fig/<categoria>/<chiave>.tex fra le categorie elencate qui
+% sotto: se lo trova lo include (centrato), altrimenti stampa il bollino blu
+% \figuramancante con la descrizione.
+%
+% Conseguenza voluta: i file in lezioni/ contengono SOLO l'ancoraggio, mai il
+% corpo della figura. Aggiungere un disegno = creare un file in figure/fig/,
+% senza toccare la lezione; cancellare quel file = si torna da solo al
+% bollino blu. Così ri-trascrivere una lezione non distrugge le figure, e
+% generare figure non può corrompere il testo.
+%
+% La <chiave> è un identificatore stabile: NON deve dipendere dalla
+% descrizione, che può cambiare a ogni ri-trascrizione.
+%
+% ATTENZIONE — dopo aver creato un NUOVO file figura serve `latexmk -g`
+% (oppure due compilazioni): latexmk non può sapere che un file finora
+% inesistente è diventato una dipendenza, e senza -g salta la ricompilazione
+% lasciando il bollino blu anche se la figura c'è. Vale solo al primo
+% passaggio da "assente" a "presente"; dopo, il file è tracciato normalmente.
+%
+% Per aggiungere una categoria basta aggiungere una riga #1{...} qui sotto.
+% =========================================================================
+\makeatletter
+\newcommand{\figuracategorie}[1]{%
+  #1{venn}%
+  #1{grafi}%
+  #1{grafici-funzioni}%
+  #1{rette-numeriche}%
+  #1{tabelle-verita}%
+  #1{diagrammi-insiemistici}%
+  #1{piano-cartesiano}%
+  #1{altro}%
+}
+\newcommand{\fig@key}{}
+\newcommand{\fig@path}{}
+\newcommand{\fig@try}[1]{%
+  \ifx\fig@path\@empty
+    \edef\fig@cand{figure/fig/#1/\fig@key.tex}%
+    \expandafter\IfFileExists\expandafter{\fig@cand}%
+      {\global\let\fig@path\fig@cand}{}%
+  \fi
+}
+\newcommand{\figura}[2]{%
+  \gdef\fig@key{#1}%
+  \gdef\fig@path{}%
+  \figuracategorie{\fig@try}%
+  \ifx\fig@path\@empty
+    \figuramancante{#2}%
+  \else
+    \begin{center}\expandafter\input\expandafter{\fig@path}\end{center}%
+  \fi
+}
+\makeatother
+\usepackage{tocloft} % secondo indice: \newlistof per l'indice delle lezioni
+% hyperref va caricato per ultimo (fra i pacchetti "normali").
+% plainpages=false + pdfpagelabels: dà àncore di pagina univoche anche quando la
+% numerazione riparte (frontespizio e primo foglio dell'indice), evitando il
+% warning "duplicate destination page.*".
+\usepackage[plainpages=false, pdfpagelabels]{hyperref}
+
+% todonotes DOPO hyperref (ordine raccomandato dal pacchetto: così i marker e
+% l'eventuale \listoftodos si agganciano correttamente ai link ipertestuali).
+\usepackage[colorinlistoftodos, textsize=tiny]{todonotes} % marker \todo{REVIEW: ...}
+% Marker rosso: contenuto di cui non si è sicuri della trascrizione, da verificare.
+\newcommand{\revisione}[1]{\todo[inline, color=red!25]{REVIEW: #1}}
+% Marker blu: nel materiale del professore c'è un disegno/schema da inserire a mano.
+\newcommand{\figuramancante}[1]{\todo[inline, color=blue!25]{(inserire disegno) #1}}
+
+\tcbuselibrary{theorems,breakable}
+
+% Stile comune per tutti i blocchi
+\tcbset{
+    mystyle/.style={
+        colback=gray!10,
+        colframe=gray!50,
+        fonttitle=\bfseries,
+        coltitle=black,
+        breakable,
+        enhanced,
+        before skip={\baselineskip},
+        after skip={\baselineskip}
+    }
+}
+
+% =========================================================================
+\newtcbtheorem[number within=section]{theorem}{Teorema}{mystyle}{th}
+\newtcbtheorem[number within=section]{property}{Proprietà}{mystyle}{pr}
+\newtcbtheorem[number within=section]{definition}{Definizione}{mystyle}{def}
+\newtcbtheorem[number within=section]{lemma}{Lemma}{mystyle}{lem}
+% =========================================================================
+
+% =========================================================================
+% Secondo indice: "Indice delle lezioni" (oltre al normale \tableofcontents).
+% Ogni lezione va marcata con \lezione{numero}{titolo} nel punto esatto in
+% cui inizia (tipicamente subito prima del \section). La voce nell'indice
+% rimanda con un collegamento ipertestuale a quel punto. Il titolo è
+% facoltativo: \lezione{2}{} produce solo "Lezione 2".
+\newlistof{lezioni}{loz}{Indice delle lezioni}
+\newcommand{\lezione}[2]{%
+    \phantomsection
+    \addcontentsline{loz}{lezioni}{\textbf{Lezione~#1}\ifx\\#2\\\else\space--- #2\fi}%
+}
+\setlength{\cftlezioniindent}{0em}
+\setlength{\cftlezioninumwidth}{0em}
+\renewcommand{\cftlezionidotsep}{\cftdotsep} % puntini fino al numero di pagina
+% =========================================================================
+
+% --- Notazioni matematiche comuni (personalizza pure) ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+% --- Intestazione e piè di pagina ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\headheight}{14pt}

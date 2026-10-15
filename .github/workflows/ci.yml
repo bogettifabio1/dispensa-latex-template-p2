@@ -1,0 +1,170 @@
+name: Compila il template
+
+# Rete di sicurezza per il repo del TEMPLATE: gira solo sui pochi push
+# strutturali (preambolo, master, script, lezioni, figure) e sulle pull request,
+# e blocca con una X rossa una modifica che non compila PRIMA che finisca in main
+# e quindi in tutti i cloni futuri. Non riguarda chi clona: i tester non pushano.
+# Consuma pochi minuti (immagine TeX Live gia' pronta), ampiamente dentro la
+# quota gratuita anche su repo privato.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'master.tex'
+      - 'preamble.tex'
+      - 'lezioni/**'
+      - 'figure/**'
+      - 'scripts/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'master.tex'
+      - 'preamble.tex'
+      - 'lezioni/**'
+      - 'figure/**'
+      - 'scripts/**'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch: {}
+
+jobs:
+  lint-scripts:
+    name: Sintassi degli script
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bash -n sugli script .sh
+        run: |
+          for f in scripts/*.sh; do
+            echo "== $f"
+            bash -n "$f"
+          done
+
+      - name: I .ps1 devono restare ASCII-only (PowerShell 5.1 senza BOM)
+        run: |
+          bad="$(perl -ne 'print "$ARGV\n" if /[^\x00-\x7F]/' scripts/*.ps1 | sort -u)"
+          if [ -n "$bad" ]; then
+            echo "Caratteri non-ASCII trovati in:"
+            echo "$bad"
+            echo "Gli script PowerShell vanno tenuti ASCII-only: senza BOM, Windows"
+            echo "PowerShell 5.1 li legge come ANSI e gli accenti diventano mojibake"
+            echo "(o rompono il parsing). Scrivi 'perche'' invece di 'perché', ecc."
+            exit 1
+          fi
+
+      - name: Parse degli script .ps1
+        shell: pwsh
+        run: |
+          $fail = $false
+          Get-ChildItem scripts/*.ps1 | ForEach-Object {
+            $errs = $null
+            [void][System.Management.Automation.PSParser]::Tokenize((Get-Content -Raw $_.FullName), [ref]$errs)
+            if ($errs.Count -gt 0) {
+              Write-Host "$($_.Name): $($errs[0].Message)"
+              $fail = $true
+            }
+          }
+          if ($fail) { exit 1 }
+
+  # Prova su Windows PowerShell 5.1 (quella per cui sono scritti i .ps1) il
+  # controllo "nessuna nota personale" di new_lecture.ps1. Non serve Claude ne'
+  # pdftoppm: il controllo scatta prima di qualunque altra cosa, e nei casi in
+  # cui NON deve scattare lo script si ferma comunque piu' avanti (pdftoppm
+  # assente sul runner): si verifica solo che l'avviso non compaia.
+  test-ps1-windows:
+    name: new_lecture.ps1 su Windows PowerShell
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Avviso "nessuna nota personale"
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $avviso = 'non hai fornito nessuna nota personale'
+          function Esegui([string[]]$argomenti) {
+            $out = & powershell -NoProfile -ExecutionPolicy Bypass -File scripts\new_lecture.ps1 @argomenti 2>&1 | Out-String
+            return @{ Code = $LASTEXITCODE; Out = $out }
+          }
+          $fail = $false
+
+          # 1) senza -Mine e senza -SenzaNote: deve fermarsi con l'avviso, codice 1
+          $r = Esegui @('prova', '-Prof', 'x.pdf')
+          if ($r.Code -ne 1 -or $r.Out -notmatch $avviso) {
+            Write-Host "FAIL 1: atteso avviso e codice 1, ottenuto codice $($r.Code)"; Write-Host $r.Out; $fail = $true
+          }
+
+          # 2) con -SenzaNote: l'avviso NON deve comparire
+          $r = Esegui @('prova', '-Prof', 'x.pdf', '-SenzaNote')
+          if ($r.Out -match $avviso) {
+            Write-Host "FAIL 2: avviso presente nonostante -SenzaNote"; Write-Host $r.Out; $fail = $true
+          }
+
+          # 3) con -Mine: l'avviso NON deve comparire
+          $r = Esegui @('prova', '-Prof', 'x.pdf', '-Mine', 'y.pdf')
+          if ($r.Out -match $avviso) {
+            Write-Host "FAIL 3: avviso presente nonostante -Mine"; Write-Host $r.Out; $fail = $true
+          }
+
+          # 4) con -SoloRaster: l'avviso NON deve comparire
+          $r = Esegui @('prova', '-Prof', 'x.pdf', '-SoloRaster')
+          if ($r.Out -match $avviso) {
+            Write-Host "FAIL 4: avviso presente con -SoloRaster"; Write-Host $r.Out; $fail = $true
+          }
+
+          if ($fail) { exit 1 }
+          Write-Host "OK: il controllo note si comporta come previsto nei 4 casi."
+          # Esce esplicitamente con 0: senza, GitHub termina il passo con l'ultimo
+          # $LASTEXITCODE, che qui e' 1 (l'ultimo script lanciato si ferma per
+          # pdftoppm assente) anche se tutti i controlli sono passati.
+          exit 0
+
+  compile:
+    name: Compila master.tex
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1) Il file come lo riceve chi clona: deve compilare cosi' com'e'.
+      - name: Compila il template distribuito (master.tex)
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: master.tex
+
+      # 2) Documento di collaudo effimero che include il frammento d'esempio:
+      #    esercita ambienti (theorem/proof), i marker \revisione/\figuramancante
+      #    e il meccanismo \figura, che il master vuoto non tocca. L'heredoc e'
+      #    quotato ('TEX'): i backslash restano letterali, niente escaping.
+      - name: Prepara il documento di collaudo (include l'esempio)
+        run: |
+          cat > master-ci.tex <<'TEX'
+          \documentclass[oneside,11pt]{book}
+          \input{preamble}
+          \title{Collaudo CI}
+          \author{CI}
+          \date{}
+          \begin{document}
+          \frontmatter
+          \maketitle
+          \tableofcontents
+          \mainmatter
+          \chapter{Collaudo CI}
+          \input{lezioni/_esempio_riferimento}
+          \end{document}
+          TEX
+
+      - name: Compila il documento di collaudo (master-ci.tex)
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: master-ci.tex
+
+      - name: Carica i log LaTeX se qualcosa fallisce
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: latex-logs
+          path: |
+            master.log
+            master-ci.log
+          if-no-files-found: ignore

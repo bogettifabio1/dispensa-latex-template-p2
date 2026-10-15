@@ -1,0 +1,26 @@
+% !TeX root = ../master.tex
+%
+% Frammento di ESEMPIO — riferimento di formato, non contenuto di un corso reale.
+% Mostra come si scrive una lezione: apertura con \section, un ambiente
+% tcbtheorem con la sua proof, e i due marker di revisione. Non va incluso in
+% master.tex; serve solo da modello. Cancellalo pure quando non ti serve più.
+
+\section{Titolo di esempio}
+
+Testo introduttivo di esempio. Qui va il discorso della lezione, con la
+notazione definita in \texttt{preamble.tex} (p.es. $\R$, $\N$) e in
+\texttt{CLAUDE.md} del corso.
+
+\begin{theorem}{Enunciato di esempio}{esempio-enunciato}
+Sia $x \in \R$. Allora vale la proprietà di esempio $P(x)$.
+\end{theorem}
+\begin{proof}
+Passaggio di esempio: da $P(x)$ segue $Q(x)$
+\revisione{controllare questo passaggio: nell'immagine del prof il simbolo era poco leggibile}
+e quindi la tesi.
+\end{proof}
+
+Nel punto in cui il professore aveva disegnato uno schema a mano si mette il
+marker blu (che nelle lezioni vere è generato da \texttt{\textbackslash figura},
+qui usato in forma grezza solo per mostrarne la resa):
+\figuramancante{schema di esempio, da inserire}

@@ -1,0 +1,48 @@
+# --- Output e file ausiliari LaTeX ---
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.loz
+*.nav
+*.out
+*.snm
+*.synctex*
+# (pattern largo: durante la compilazione latexmk crea anche master.synctex(busy),
+#  che *.synctex.gz da solo non intercetta)
+*.toc
+*.tdo
+*.vrb
+*.pdf
+# Scelta deliberata: master.pdf NON viene versionato. Il repo resta di soli
+# sorgenti - niente diff binari a ogni ricompilazione. Per leggere la dispensa
+# si compila in locale: latexmk -pdf master.tex
+
+# Il materiale in raw/ (slide del professore, tuoi appunti) resta SOLO sul tuo
+# computer: e' materiale coperto da copyright e/o personale, e non va finito per
+# sbaglio su GitHub con un push. Si versionano solo i .gitkeep che tengono
+# esistenti le cartelle.
+raw/prof/*
+raw/mine/*
+!raw/prof/.gitkeep
+!raw/mine/.gitkeep
+
+# --- Immagini rasterizzate ---
+# Rigenerabili da raw/prof e raw/mine con scripts/new_lecture.sh
+raw/_images/
+
+# --- Allineamento annotata<->vergine (modello M2) ---
+# Dump di testo e mappa di coverage, rigenerabili con scripts/align_slides.sh
+align/
+
+# --- Sistema ---
+Thumbs.db
+desktop.ini
+.DS_Store

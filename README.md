@@ -4,7 +4,7 @@ Template per trascrivere appunti universitari in LaTeX con l'aiuto di Claude
 Code, a partire dal materiale del professore (PDF di slide/dispense) e dalle
 note personali. Ogni lezione diventa un frammento `.tex` già strutturato, con
 le parti incerte e i disegni mancanti marcati per la revisione invece che
-riletti da capo.
+riletti da capo. 
 
 Si copia questo scheletro per ogni corso. Due skill di bootstrap fanno il setup
 al posto tuo: `/course-setup` deduce con una breve intervista **com'è

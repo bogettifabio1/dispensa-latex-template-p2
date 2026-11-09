@@ -514,7 +514,8 @@ controllo dedicato a Claude Code: `claude doctor`.
 
 ---
 
-# Feedback
+# Feedback 
+
 
 Il progetto è giovane e ogni riscontro serve, anche piccolo. Raccontalo
 direttamente a chi ti ha passato il progetto, in chat o a voce: non serve

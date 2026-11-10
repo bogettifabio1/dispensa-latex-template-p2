@@ -1,532 +1,668 @@
 # dispensa-latex-template
 
-Template per trascrivere appunti universitari in LaTeX con l'aiuto di Claude
-Code, a partire dal materiale del professore (PDF di slide/dispense) e dalle
-note personali. Ogni lezione diventa un frammento `.tex` già strutturato, con
-le parti incerte e i disegni mancanti marcati per la revisione invece che
-riletti da capo. 
+**Turn university lectures into clean LaTeX notes, with the help of Claude Code.**
 
-Si copia questo scheletro per ogni corso. Due skill di bootstrap fanno il setup
-al posto tuo: `/course-setup` deduce con una breve intervista **com'è
-organizzato** il materiale del corso (slide complete? slide-scheletro annotate
-a lezione? lavagna? solo tuoi appunti?) e istruisce di conseguenza gli script;
-`/professor-profile` analizza un campione di 2–4 lezioni e deduce la
-**notazione** del professore. Insieme compilano `CLAUDE.md` (il resto del file
-contiene già le regole di sistema pronte). Poi si aggiungono le lezioni una
-alla volta.
+A template for transcribing a course into LaTeX, starting from your professor's
+material (slide / lecture-note PDFs) and your own notes. Each lecture becomes a
+ready-made `.tex` fragment. Anything uncertain, and every missing drawing, is
+**flagged for review** instead of silently guessed, so you never have to
+re-read the whole lecture from scratch.
 
-Questo repo è un **template repository** pubblico di GitHub: non contiene
-materiale di nessun corso, solo lo scheletro. Per usarlo premi **Use this
-template ▸ Create a new repository** (vedi «Scarica il progetto»): ottieni un
-repo **tuo e indipendente**, senza la storia dei commit e senza legame con
-l'originale (non è un fork, non ha un upstream). Crealo **privato**: è lì che
-metterai la dispensa di una materia.
+## Contents
 
-> **Progetto amatoriale e sperimentale.** Nato per trascrivere le dispense di un
-> corso, è offerto così com'è, senza garanzie: può avere spigoli e ti chiediamo
-> di dircelo (vedi «Feedback» in fondo).
->
-> - **Testato su Windows.** Gli script per Mac (`.sh`) esistono ma **non sono
->   mai stati provati su un Mac**, e la guida d'installazione Mac non è
->   verificata: se li usi, il tuo riscontro è prezioso. Gli stessi `.sh`
->   valgono per Linux, ma non c'è una guida d'installazione dedicata.
-> - **Cosa viene inviato ad Anthropic.** Per trascrivere, Claude Code legge le
->   immagini delle pagine dei tuoi PDF (slide del professore, tuoi appunti) e le
->   elabora sui server di Anthropic. Non usarlo su materiale che non puoi
->   condividere con un servizio esterno.
-> - **Materiale e copyright.** I PDF in `raw/` restano solo sul tuo computer (git
->   li ignora). La dispensa che ottieni è una trascrizione di contenuti del
->   professore: se pubblichi il tuo repo, tienilo **privato** o assicurati di
->   poter condividere quel contenuto. Il template è sotto licenza MIT e non
->   contiene materiale di corsi: chi lo usa è l'unico responsabile del materiale
->   che vi inserisce e di come lo distribuisce.
-
-> ⚠️ **Non rendere mai pubblico il repo di una materia** (questo template, che è
-> vuoto, sì; la tua copia con le lezioni no). Contiene (o conterrà)
-> lezioni trascritte dal materiale del professore e il `CLAUDE.md` con il suo
-> profilo: sono contenuti coperti da copyright, e una richiesta di rimozione
-> arriverebbe a te. Non togliere `raw/` dal `.gitignore` e non usare
-> `git add -f` sui PDF. In più, i commit riportano la tua email: per non
-> esporla, su GitHub attiva «Keep my email addresses private» e usa l'indirizzo
-> `…@users.noreply.github.com` come `git config --global user.email`.
-> Per controllare lo stato in qualsiasi momento: `.\scripts\check_setup.ps1`
-> (Windows) o `./scripts/check_setup.sh` (Mac): avvisa se `raw/` non è ignorato
-> o se contiene file versionati.
+- [How it works](#how-it-works)
+- [Before you start](#before-you-start)
+- [Important notes: privacy, copyright, status](#important-notes-privacy-copyright-status)
+- [Installation](#installation) — Windows or macOS
+- [Verify your setup](#verify-your-setup)
+- [Workflow](#workflow)
+- [Tips](#tips)
+- [Troubleshooting](#troubleshooting)
+- [Project structure](#project-structure)
+- [Feedback](#feedback)
 
 ---
 
-# Installazione (Windows, da zero)
+## How it works
 
-Presume che tu non abbia mai usato un terminale. Segui i passi in ordine.
+You copy this skeleton once per course. Two bootstrap skills do the setup for
+you, then you add lectures one at a time:
 
-> Guida per Windows 10/11. **Sei su Mac?** Salta alla sezione «Installazione
-> (Mac, da zero)» qui sotto: stessi strumenti, comandi `.sh` al posto dei `.ps1`.
+```
+ 1. /course-setup         2. /professor-profile        3. transcribe a lecture        4. review
+ ───────────────────      ────────────────────────     ──────────────────────────     ─────────────────
+ Short interview:         Analyzes 2–4 sample          new_lecture script →           Fix the red and
+ how is the course        lectures to learn the        Claude writes the .tex →       blue markers, then
+ material organized?      professor's NOTATION.        PDF is compiled.               repeat for the next
+ (once per course)        (once per course)            (once per lecture)             lecture.
+```
 
-**Prima di cominciare serve:**
-- Windows 10 (1809+) o Windows 11.
-- Un **abbonamento a Claude a pagamento** (Pro, Max, Team o Enterprise). Il piano
-  gratuito non basta: senza abbonamento a pagamento Claude Code non parte.
-- Circa mezz'ora e un paio di GB liberi.
+- `/course-setup` finds out **how your material is organized** (complete
+  slides? skeleton slides annotated in class? blackboard? only your own
+  notes?) and configures the pipeline accordingly.
+- `/professor-profile` finds out **which notation** the professor uses.
+- Together they fill in `CLAUDE.md`, the file Claude Code reads automatically
+  (the rest of that file already contains the ready-made system rules).
 
-Installerai, in ordine: **VS Code** (l'editor), **Git** (per scaricare il
-progetto), **Claude Code** (l'assistente), **MiKTeX** (compila il PDF e include
-`pdftoppm`, che serve a convertire i PDF del professore in immagini — nessun
-altro strumento da installare a parte).
+This repository is a public GitHub **template repository**. It contains no
+course material, only the skeleton. Press **Use this template ▸ Create a new
+repository** (see [Download the project](#5-download-the-project)) to get your
+own independent copy, with no commit history and no link to the original (it is
+not a fork and has no upstream). Make it **private**: that is where the notes
+for one subject will live.
 
-## 1. VS Code
+## Before you start
 
-Scarica da <https://code.visualstudio.com> (pulsante blu), apri l'installer e
-clicca Avanti fino alla fine lasciando le opzioni proposte. Poi apri **Visual
-Studio Code** dal menu Start.
+You need:
 
-## 2. Git
+- A **paid Claude subscription** (Pro, Max, Team or Enterprise). The free plan is
+  not enough: Claude Code will not start without a paid subscription.
+- About 30 minutes and a few GB of free disk space.
+- Windows 10 (1809+) / Windows 11, **or** macOS Big Sur 11 or newer.
 
-Scarica da <https://git-scm.com/downloads/win>, apri l'installer e clicca Next
-a ogni schermata lasciando le opzioni predefinite. Installa anche "Git Bash",
-usato internamente da Claude Code.
+| System | Status |
+|---|---|
+| 🪟 **Windows** | Tested. Uses the `.ps1` scripts. |
+| 🍎 **macOS** | The `.sh` scripts exist but have **never been tested on a Mac**, and the Mac install guide is unverified. Your feedback is very valuable. |
+| 🐧 **Linux** | The same `.sh` scripts should work, but there is no dedicated install guide. |
 
-## 3. Claude Code
+> **You do not need to have used a terminal before.** Follow the steps in order.
 
-1. Apri **PowerShell** (Start → scrivi `PowerShell`).
-2. Incolla ed esegui:
+## Important notes: privacy, copyright, status
+
+> **Amateur, experimental project.** Built to transcribe the notes of a single
+> course and offered as-is, with no warranty. It may have rough edges; please
+> tell us about them (see [Feedback](#feedback)).
+
+- **What is sent to Anthropic.** To transcribe, Claude Code reads the page images
+  of your PDFs (the professor's slides, your notes) and processes them on
+  Anthropic's servers. Do not use it on material you cannot share with an
+  external service.
+- **Material and copyright.** The PDFs in `raw/` stay on your computer only (git
+  ignores them). The notes you produce are a transcription of the professor's
+  content. The template is MIT-licensed and contains no course material:
+  whoever uses it is solely responsible for the material they put into it and
+  for how they distribute it.
+
+> ⚠️ **Never make the repository of a subject public.** This empty template can
+> be public; your copy with the lectures in it must not. It contains (or will
+> contain) lectures transcribed from the professor's material, plus `CLAUDE.md`
+> with their profile. That content is copyrighted, and any takedown request
+> would be addressed to you.
+>
+> - Do not remove `raw/` from `.gitignore` and do not use `git add -f` on PDFs.
+> - Commits contain your email address. To avoid exposing it, enable **"Keep my
+>   email addresses private"** on GitHub and use your
+>   `…@users.noreply.github.com` address as `git config --global user.email`.
+> - To check the status at any time, run `.\scripts\check_setup.ps1` (Windows) or
+>   `./scripts/check_setup.sh` (Mac). It warns you if `raw/` is not ignored or
+>   contains tracked files.
+
+---
+
+## Installation
+
+You will install, in this order:
+
+| Tool | What it is for |
+|---|---|
+| **VS Code** | The editor where you will work. |
+| **Git** | Downloads the project. |
+| **Claude Code** | The AI assistant that does the transcription. |
+| **A LaTeX distribution** | Compiles the PDF. **MiKTeX** on Windows, **MacTeX** on Mac. |
+| **`pdftoppm`** | Converts the professor's PDFs into images. It comes with MiKTeX on Windows; on Mac you install it separately (**Poppler**). |
+
+Open the section for your system and follow the steps in order.
+
+<details>
+<summary><b>🪟 Windows (10 / 11)</b> — click to expand</summary>
+
+### 1. VS Code
+
+Download it from <https://code.visualstudio.com> (blue button), open the
+installer and click Next until the end, leaving the suggested options. Then open
+**Visual Studio Code** from the Start menu.
+
+### 2. Git
+
+Download it from <https://git-scm.com/downloads/win>, open the installer and
+click Next on every screen, leaving the defaults. This also installs "Git Bash",
+which Claude Code uses internally.
+
+### 3. Claude Code
+
+1. Open **PowerShell** (Start → type `PowerShell`).
+2. Paste and run:
    ```powershell
    irm https://claude.ai/install.ps1 | iex
    ```
-3. Chiudi e riapri PowerShell, poi verifica:
+3. Close and reopen PowerShell, then check:
    ```powershell
    claude --version
    ```
-   Deve stampare un numero di versione. Se dice "comando non riconosciuto",
-   chiudi e riapri di nuovo il terminale.
-4. Primo avvio: scrivi `claude`, fai login nel browser con l'account **con
-   l'abbonamento a pagamento**. Per uscire: `/exit`.
+   It must print a version number. If it says "command not recognized", close
+   and reopen the terminal again.
+4. First launch: type `claude` and log in through the browser with the account
+   **that has the paid subscription**. To quit: `/exit`.
 
-## 4. MiKTeX
+### 4. MiKTeX
 
-1. Scarica il MiKTeX Installer da <https://miktex.org/download>.
-2. Durante l'installazione scegli **"Install MiKTeX only for me"** e, alla
-   domanda "Install missing packages on the fly", scegli **"Yes"** (MiKTeX
-   scaricherà da solo i pacchetti mancanti alla prima compilazione).
-3. Apri **MiKTeX Console** e, se proposto, fai **Check for updates → Update now**.
-4. Chiudi e riapri PowerShell, poi verifica:
+1. Download the MiKTeX Installer from <https://miktex.org/download>.
+2. During installation choose **"Install MiKTeX only for me"** and, when asked
+   "Install missing packages on the fly", choose **"Yes"** (MiKTeX will download
+   missing packages by itself on the first compilation).
+3. Open **MiKTeX Console** and, if offered, run **Check for updates → Update now**.
+4. Close and reopen PowerShell, then check:
    ```powershell
    latexmk --version
    pdftoppm -v
    ```
-   Se non vengono riconosciuti, riavvia il PC (serve a caricare il PATH) e riprova.
+   If they are not recognized, restart the PC (this loads the PATH) and try again.
 
-## 5. Scarica il progetto
+### 5. Download the project
 
-Consigliato: crea **la tua copia** del template, così hai un posto tuo dove
-salvare la dispensa.
+Recommended: create **your own copy** of the template, so you have a place of
+your own to store your notes.
 
-1. Con un account GitHub, apri
-   <https://github.com/bogettifabio1/dispensa-latex-template-p2> e premi
-   **Use this template ▸ Create a new repository**. Scegli **Private**: la tua
-   dispensa contiene contenuti del professore.
-2. Clona **la tua** copia (sostituisci `TUO-UTENTE/NOME-REPO`):
+1. With a GitHub account, open
+   <https://github.com/bogettifabio1/dispensa-latex-template-p2> and press
+   **Use this template ▸ Create a new repository**. Choose **Private**: your
+   notes contain the professor's content.
+2. Clone **your** copy (replace `YOUR-USER/YOUR-REPO`):
 
 ```powershell
 cd $HOME\Desktop
-git clone https://github.com/TUO-UTENTE/NOME-REPO.git
+git clone https://github.com/YOUR-USER/YOUR-REPO.git
 ```
 
-In alternativa puoi clonare direttamente il repo originale
-(`git clone https://github.com/bogettifabio1/dispensa-latex-template-p2.git`) o,
-senza account GitHub e senza Git, usare **Code ▸ Download ZIP** sulla pagina del
-template. Funziona uguale, ma non avrai un salvataggio online della tua dispensa
-e, per ricevere i miglioramenti futuri, dovrai chiedere a Claude Code di
-riportarli a mano (vedi «Consigli»).
+*Alternatives:* you can clone the original repository directly
+(`git clone https://github.com/bogettifabio1/dispensa-latex-template-p2.git`) or,
+with no GitHub account and no Git, use **Code ▸ Download ZIP** on the template
+page. Both work the same, but you will have no online backup of your notes and,
+to receive future improvements, you will have to ask Claude Code to port them by
+hand (see [Tips](#tips)).
 
-## 6. Apri il progetto e sblocca gli script
+### 6. Open the project and unlock the scripts
 
-1. In VS Code: **File ▸ Apri cartella…** e scegli la cartella scaricata.
-2. Apri un terminale **PowerShell** dentro VS Code (**Terminale ▸ Nuovo terminale**).
-3. Una volta sola, sblocca l'esecuzione degli script del progetto (Windows li
-   blocca di default):
+1. In VS Code: **File ▸ Open Folder…** and choose the downloaded folder.
+2. Open a **PowerShell** terminal inside VS Code (**Terminal ▸ New Terminal**).
+3. Once only, unlock script execution for the project (Windows blocks scripts by
+   default):
    ```powershell
    Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
    ```
-   Conferma con `S`/`Y`. Questo abilita gli script scaricati da te, senza
-   abbassare la sicurezza per quelli presi da internet.
+   Confirm with `Y`. This allows scripts you downloaded yourself, without
+   lowering security for those fetched from the internet.
 
----
+</details>
 
-# Installazione (Mac, da zero)
+<details>
+<summary><b>🍎 macOS (Big Sur 11+, Intel and Apple Silicon)</b> — click to expand</summary>
 
-Presume che tu non abbia mai usato il Terminale. Segui i passi in ordine.
+> This guide is **not verified on a real Mac**. If something does not work, please
+> tell us (see [Feedback](#feedback)).
 
-> Guida per macOS (Big Sur 11 o più recente), sia Intel sia Apple Silicon.
+On Mac, almost everything is installed with **Homebrew**, the command-line
+package manager.
 
-**Prima di cominciare serve:**
-- Un **abbonamento a Claude a pagamento** (Pro, Max, Team o Enterprise). Il piano
-  gratuito non basta: senza abbonamento a pagamento Claude Code non parte.
-- Circa mezz'ora e qualche GB libero.
+### 1. Terminal and Homebrew
 
-Su Mac gli strumenti si installano quasi tutti con **Homebrew**, il gestore di
-pacchetti da riga di comando. Installerai, in ordine: **Homebrew**, **VS Code**
-(l'editor), **Git**, **Claude Code** (l'assistente), **MacTeX** (compila il PDF)
-e **Poppler** (fornisce `pdftoppm`, che converte i PDF del professore in
-immagini — su Mac non è incluso in MacTeX, va installato a parte).
-
-## 1. Terminale e Homebrew
-
-1. Apri il **Terminale** (⌘+Spazio, scrivi `Terminale`, Invio).
-2. Installa Homebrew incollando:
+1. Open **Terminal** (⌘+Space, type `Terminal`, Enter).
+2. Install Homebrew by pasting:
    ```bash
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
    ```
-   A fine installazione può chiederti di eseguire due righe `echo … >> ~/.zprofile`
-   per aggiungere `brew` al PATH: eseguile come indicato. Verifica con:
+   At the end it may ask you to run two `echo … >> ~/.zprofile` lines to add
+   `brew` to your PATH: run them as instructed. Then check:
    ```bash
    brew --version
    ```
 
-## 2. VS Code e Git
+### 2. VS Code and Git
 
 ```bash
 brew install --cask visual-studio-code
 brew install git
 ```
 
-## 3. Claude Code
+### 3. Claude Code
 
-1. Installa:
+1. Install:
    ```bash
    curl -fsSL https://claude.ai/install.sh | bash
    ```
-2. Chiudi e riapri il Terminale, poi verifica:
+2. Close and reopen Terminal, then check:
    ```bash
    claude --version
    ```
-   Se dice "command not found", chiudi e riapri di nuovo il Terminale.
-3. Primo avvio: scrivi `claude`, fai login nel browser con l'account **con
-   l'abbonamento a pagamento**. Per uscire: `/exit`.
+   If it says "command not found", close and reopen Terminal again.
+3. First launch: type `claude` and log in through the browser with the account
+   **that has the paid subscription**. To quit: `/exit`.
 
-## 4. MacTeX e Poppler
+### 4. MacTeX and Poppler
 
 ```bash
 brew install --cask mactex-no-gui
 brew install poppler
 ```
 
-`mactex-no-gui` è grande (qualche GB): la prima installazione richiede pazienza.
-Chiudi e riapri il Terminale, poi verifica:
+`mactex-no-gui` is large (a few GB): the first install takes patience. Poppler
+provides `pdftoppm`, which is **not** included in MacTeX. Close and reopen
+Terminal, then check:
+
 ```bash
 latexmk --version
 pdftoppm -v
 ```
-Se non vengono riconosciuti, chiudi e riapri il Terminale (ricarica il PATH) e
-riprova.
 
-## 5. Scarica il progetto
+If they are not recognized, close and reopen Terminal (this reloads the PATH)
+and try again.
 
-Consigliato: crea **la tua copia** del template, così hai un posto tuo dove
-salvare la dispensa.
+### 5. Download the project
 
-1. Con un account GitHub, apri
-   <https://github.com/bogettifabio1/dispensa-latex-template-p2> e premi
-   **Use this template ▸ Create a new repository**. Scegli **Private**: la tua
-   dispensa contiene contenuti del professore.
-2. Clona **la tua** copia (sostituisci `TUO-UTENTE/NOME-REPO`):
+Recommended: create **your own copy** of the template, so you have a place of
+your own to store your notes.
+
+1. With a GitHub account, open
+   <https://github.com/bogettifabio1/dispensa-latex-template-p2> and press
+   **Use this template ▸ Create a new repository**. Choose **Private**: your
+   notes contain the professor's content.
+2. Clone **your** copy (replace `YOUR-USER/YOUR-REPO`):
 
 ```bash
 cd ~/Desktop
-git clone https://github.com/TUO-UTENTE/NOME-REPO.git
+git clone https://github.com/YOUR-USER/YOUR-REPO.git
 ```
 
-In alternativa puoi clonare direttamente il repo originale
-(`git clone https://github.com/bogettifabio1/dispensa-latex-template-p2.git`) o,
-senza account GitHub e senza Git, usare **Code ▸ Download ZIP** sulla pagina del
-template. Funziona uguale, ma non avrai un salvataggio online della tua dispensa
-e, per ricevere i miglioramenti futuri, dovrai chiedere a Claude Code di
-riportarli a mano (vedi «Consigli»).
+*Alternatives:* you can clone the original repository directly
+(`git clone https://github.com/bogettifabio1/dispensa-latex-template-p2.git`) or,
+with no GitHub account and no Git, use **Code ▸ Download ZIP** on the template
+page. Both work the same, but you will have no online backup of your notes and,
+to receive future improvements, you will have to ask Claude Code to port them by
+hand (see [Tips](#tips)).
 
-## 6. Apri il progetto e rendi eseguibili gli script
+### 6. Open the project and make the scripts executable
 
-1. In VS Code: **File ▸ Apri…** e scegli la cartella scaricata.
-2. Apri un terminale dentro VS Code (**Terminale ▸ Nuovo terminale**).
-3. Una volta sola, rendi eseguibili gli script del progetto:
+1. In VS Code: **File ▸ Open…** and choose the downloaded folder.
+2. Open a terminal inside VS Code (**Terminal ▸ New Terminal**).
+3. Once only, make the project scripts executable:
    ```bash
    chmod +x scripts/*.sh
    ```
 
+</details>
+
 ---
 
-# Verifica dell'installazione
+## Verify your setup
 
-Prima di cominciare, controlla in un colpo solo che tutto sia a posto. Lo script
-non modifica nulla: per ogni strumento dice **OK** oppure **cosa manca e come
-installarlo**.
+Before you begin, check everything in one go. The script changes nothing: for
+each tool it says **OK**, or **what is missing and how to install it**.
+
+<details>
+<summary>🪟 Windows</summary>
 
 ```powershell
 .\scripts\check_setup.ps1
 ```
 
-Su Mac:
+</details>
+
+<details>
+<summary>🍎 macOS / 🐧 Linux</summary>
 
 ```bash
 ./scripts/check_setup.sh
 ```
 
-Se elenca qualcosa come mancante, segui il suggerimento accanto, chiudi e riapri
-il terminale, e rilancia lo script finché non è tutto **OK**. Così eviti di
-scoprire un pezzo mancante a metà della prima lezione.
+</details>
+
+If anything is listed as missing, follow the hint next to it, close and reopen
+the terminal, and run the script again until everything is **OK**. This way you
+avoid discovering a missing piece halfway through your first lecture.
 
 ---
 
-# Flusso di lavoro
+## Workflow
 
-> 💡 Non devi memorizzare né copiare a mano i comandi qui sotto: puoi anche
-> aprire `claude` e descrivere cosa vuoi in linguaggio naturale, es. "inizia
-> l'analisi della sintassi del professore eseguendo il comando giusto" o
-> "trascrivi la lezione 1 dal PDF in raw/prof/lezione1.pdf". Claude Code legge
-> questo README e gli script in `scripts/`, capisce da solo quale comando
-> lanciare e con quali argomenti, e lo esegue lui nel terminale integrato.
+> 💡 **You don't have to memorize or type the commands below.** You can open
+> `claude` and describe what you want in plain language, for example *"start
+> analyzing the professor's notation by running the right command"* or
+> *"transcribe lecture 1 from raw/prof/lecture1.pdf"*. Claude Code reads this
+> README and the scripts in `scripts/`, works out which command to run and with
+> which arguments, and runs it for you in the integrated terminal.
 
-> 🪟 / 🍎 **Windows o Mac?** I comandi sotto sono mostrati per Windows
-> (`.\scripts\…​.ps1`). Su Mac usa l'equivalente `.sh` (`./scripts/…​.sh`) con le
-> opzioni in stile Unix (`--prof`, `--mine`, `--annotata`, `--vergine`,
-> `--senza-note`, `--solo-raster`) e i file separati da **spazi** invece che da
-> virgole. Dove cambia qualcosa trovi sotto entrambe
-> le forme. (Oppure, come sopra, lascia scegliere a Claude Code.)
+**Windows or Mac?** Every command below is shown in both forms; open the one for
+your system. Both do the same thing, only the option syntax differs:
 
-## 1. PDF al loro posto
+| | 🪟 Windows (`.ps1`) | 🍎 Mac / Linux (`.sh`) |
+|---|---|---|
+| Script | `.\scripts\new_lecture.ps1` | `./scripts/new_lecture.sh` |
+| Option style | `-Prof`, `-Mine`, … | `--prof`, `--mine`, … |
+| Several files | separated by **commas**, each in quotes | separated by **spaces** |
+| Line continuation | backtick `` ` `` | backslash `\` |
 
-Copia i PDF del professore in `raw/prof/`, le tue note scannerizzate (se ci
-sono) in `raw/mine/`. Git li ignora: restano solo sul tuo computer.
+**The options** (the names are Italian because they are the actual flags of the
+scripts; the English meaning is in the last column):
 
-## 2. Modello del materiale (una volta per corso)
+| Windows | Mac / Linux | Meaning |
+|---|---|---|
+| `-Prof` | `--prof` | The professor's PDF(s) (the source of truth). |
+| `-Mine` | `--mine` | Your own notes (PDF). |
+| `-Annotata` | `--annotata` | The professor's *annotated* slides (model M2 only). |
+| `-Vergine` | `--vergine` | The professor's *blank / clean* slides (model M2 only). |
+| `-SenzaNote` | `--senza-note` | Proceed without personal notes (*"no notes"*). |
+| `-SoloRaster` | `--solo-raster` | Only convert PDFs to images, do not transcribe (*"raster only"*). |
 
-Prima di trascrivere qualunque lezione, fai capire a Claude Code **com'è
-fatto** il materiale di questo corso. Apri `claude` e lancia:
+### Step 1. Put the PDFs in place
+
+Copy the professor's PDFs into `raw/prof/` (*prof* = professor) and your scanned
+notes (if any) into `raw/mine/` (*mine* = your own). Git ignores them: they stay
+on your computer only.
+
+### Step 2. Course material model (once per course)
+
+Before transcribing any lecture, let Claude Code understand **how the material of
+this course is organized**. Open `claude` and run:
 
 ```
 /course-setup
 ```
 
-È un'intervista breve e adattiva (salta da sola le domande non pertinenti al
-tuo caso) e scrive il risultato — solo dopo tua conferma — nella sezione
-"Modello del materiale" di `CLAUDE.md`. Le risposte ricadono di norma in uno
-di questi 4 modelli, che decidono anche **quali flag** usare al passo 4:
+It is a short, adaptive interview (it skips questions that don't apply to your
+case) and writes the result — only after your confirmation — into the "Modello
+del materiale" section (*"material model"*) of `CLAUDE.md`. The answers normally fall into one of
+these 4 models, which also decide **which flags** to use in Step 4:
 
-| Modello | Materiale del prof | Flag da usare |
+| Model | Professor's material | Flags to use |
 |---|---|---|
-| **M1** — slide complete | PDF autosufficienti, poco/nessun annotato | `--prof` + `--mine` (senza note: `--senza-note`) |
-| **M2** — slide-scheletro annotate | Slide lunghe completate a lezione, una lezione può attraversare più set | `--annotata` + `--vergine` (+ `--mine`) |
-| **M3** — lavagna / manoscritto | Niente slide, tutto scritto a mano e fotografato/scansionato | `--prof` (immagini lette a vista) + `--mine` |
-| **M4** — soli appunti | Il prof non distribuisce nulla | solo `--mine`, che diventa la fonte di verità |
+| **M1** — complete slides | Self-contained PDFs, little or no annotation | `--prof` + `--mine` (without notes: `--senza-note`) |
+| **M2** — annotated skeleton slides | Long slides completed in class; one lecture may span several sets | `--annotata` + `--vergine` (+ `--mine`) |
+| **M3** — blackboard / handwritten | No slides, everything handwritten and photographed/scanned | `--prof` (images read visually) + `--mine` |
+| **M4** — own notes only | The professor distributes nothing | only `--mine`, which becomes the source of truth |
 
-Si rifà solo se cambia corso o professore, non a ogni lezione. Se lo salti, la
-pipeline ricade sul default M1 (`--prof`/`--mine`).
+(Flags are shown in Mac/Linux style; on Windows use the equivalents from the
+table above.) You only redo this if the course or the professor changes, not for
+every lecture. If you skip it, the pipeline falls back to the M1 default
+(`--prof` / `--mine`).
 
-## 3. Profilo del professore (una volta per corso)
+### Step 3. Professor profile (once per course)
 
-Trasforma 2–4 lezioni campione in immagini, sotto un unico nome:
+Turn 2–4 sample lectures into images, under a single name:
+
+<details>
+<summary>🪟 Windows</summary>
 
 ```powershell
-.\scripts\new_lecture.ps1 campione-profilo -SoloRaster `
-    -Prof "raw/prof/lezione1.pdf","raw/prof/lezione2.pdf","raw/prof/lezione3.pdf"
+.\scripts\new_lecture.ps1 profile-sample -SoloRaster `
+    -Prof "raw/prof/lecture1.pdf","raw/prof/lecture2.pdf","raw/prof/lecture3.pdf"
 ```
 
-Su Mac:
+</details>
+
+<details>
+<summary>🍎 macOS / 🐧 Linux</summary>
 
 ```bash
-./scripts/new_lecture.sh campione-profilo --solo-raster \
-    --prof "raw/prof/lezione1.pdf" "raw/prof/lezione2.pdf" "raw/prof/lezione3.pdf"
+./scripts/new_lecture.sh profile-sample --solo-raster \
+    --prof "raw/prof/lecture1.pdf" "raw/prof/lecture2.pdf" "raw/prof/lecture3.pdf"
 ```
 
-Poi apri `claude` e incolla questo prompt (adattando il nome del corso):
+</details>
+
+Then open `claude` and paste this prompt (adapting the course name):
 
 ```
 /professor-profile
 
-Campione da analizzare: tutte le immagini in raw/_images/campione-profilo/
-(prefisso prof1_, prof2_, ...). Corso: <nome del corso>.
+Sample to analyze: all the images in raw/_images/profile-sample/
+(prefixes prof1_, prof2_, ...). Course: <course name>.
 ```
 
-Claude analizza le immagini, mostra una tabella di ciò che ha capito e
-**aspetta conferma** prima di scrivere in `CLAUDE.md`. Da qui in poi trascrive
-con le convenzioni del tuo professore.
+Claude analyzes the images, shows a table of what it understood and **waits for
+your confirmation** before writing to `CLAUDE.md`. From then on it transcribes
+using your professor's conventions.
 
-> Nel modello **M2** campiona le slide **vergini** (usa `-Vergine`/`--vergine`
-> al posto di `-Prof`/`--prof` nel comando sopra), non la copia annotata: è lì
-> che la notazione tipografica è netta. Nel modello **M4** (soli appunti) non
-> c'è materiale del prof da profilare: la skill se ne accorge da sola, te lo
-> spiega e si ferma — salta pure a questo punto.
+> **Model M2:** sample the **blank** slides (use `-Vergine` / `--vergine` instead
+> of `-Prof` / `--prof` in the command above), not the annotated copy: that is
+> where the typographic notation is clearest.
+>
+> **Model M4** (own notes only): there is no professor material to profile. The
+> skill notices this by itself, explains it and stops. Just skip this step.
 
-## 4. Trascrivere una lezione
+### Step 4. Transcribe a lecture
 
-Il comando dipende dal modello individuato al passo 2.
+The command depends on the model identified in Step 2. The first argument
+(`lecture01` below) is just a name of your choice for the lecture.
 
-**M1 / M3** (slide complete o lavagna — il prof è la fonte di verità), con le
-tue note che coprono la stessa lezione:
+#### M1 / M3 — complete slides or blackboard (the professor is the source of truth)
+
+With your own notes covering the same lecture:
+
+<details>
+<summary>🪟 Windows</summary>
 
 ```powershell
-.\scripts\new_lecture.ps1 lezione01 -Prof "raw/prof/lezione1.pdf" -Mine "raw/mine/mie-note-lez1.pdf"
+.\scripts\new_lecture.ps1 lecture01 -Prof "raw/prof/lecture1.pdf" -Mine "raw/mine/my-notes-lec1.pdf"
 ```
 
-Su Mac:
+</details>
+
+<details>
+<summary>🍎 macOS / 🐧 Linux</summary>
 
 ```bash
-./scripts/new_lecture.sh lezione01 --prof "raw/prof/lezione1.pdf" --mine "raw/mine/mie-note-lez1.pdf"
+./scripts/new_lecture.sh lecture01 --prof "raw/prof/lecture1.pdf" --mine "raw/mine/my-notes-lec1.pdf"
 ```
 
-**Senza note personali** (vale per M1, M2 e M3). Se non passi nessun
-`-Mine`/`--mine`, lo script si ferma e ti avvisa che mancano le tue note (di
-norma arricchiscono la trascrizione con quello che il prof dice a voce). Se vuoi
-trascrivere lo stesso solo dal materiale del professore, rilancia lo stesso
-comando aggiungendo `-SenzaNote` (Windows) o `--senza-note` (Mac):
+</details>
+
+**Without personal notes** (valid for M1, M2 and M3). If you pass no
+`-Mine` / `--mine`, the script stops and warns you that your notes are missing
+(they normally enrich the transcription with what the professor says out loud).
+If you still want to transcribe from the professor's material alone, run the same
+command again adding `-SenzaNote` (Windows) or `--senza-note` (Mac):
+
+<details>
+<summary>🪟 Windows</summary>
 
 ```powershell
-.\scripts\new_lecture.ps1 lezione01 -Prof "raw/prof/lezione1.pdf" -SenzaNote
+.\scripts\new_lecture.ps1 lecture01 -Prof "raw/prof/lecture1.pdf" -SenzaNote
 ```
+
+</details>
+
+<details>
+<summary>🍎 macOS / 🐧 Linux</summary>
 
 ```bash
-./scripts/new_lecture.sh lezione01 --prof "raw/prof/lezione1.pdf" --senza-note
+./scripts/new_lecture.sh lecture01 --prof "raw/prof/lecture1.pdf" --senza-note
 ```
 
-Se lo lanci tramite Claude Code, ti riporta lui l'avviso.
+</details>
 
-**M2** (slide-scheletro annotate — richiede `-Annotata`/`--annotata` **e**
-`-Vergine`/`--vergine` insieme, con i deck vergini nell'ordine in cui la
-lezione li attraversa):
+If you launch it through Claude Code, it will relay the warning to you.
+
+#### M2 — annotated skeleton slides
+
+Requires `-Annotata` / `--annotata` **and** `-Vergine` / `--vergine` together,
+with the blank decks listed in the order the lecture goes through them:
+
+<details>
+<summary>🪟 Windows</summary>
 
 ```powershell
-.\scripts\new_lecture.ps1 lezione05 `
-    -Annotata "raw/prof/lez05_annotata.pdf" `
+.\scripts\new_lecture.ps1 lecture05 `
+    -Annotata "raw/prof/lec05_annotated.pdf" `
     -Vergine "raw/prof/deckA.pdf","raw/prof/deckB.pdf" `
-    -Mine "raw/mine/mie-note-lez5.pdf"
+    -Mine "raw/mine/my-notes-lec5.pdf"
 ```
+
+</details>
+
+<details>
+<summary>🍎 macOS / 🐧 Linux</summary>
 
 ```bash
-./scripts/new_lecture.sh lezione05 \
-    --annotata "raw/prof/lez05_annotata.pdf" \
+./scripts/new_lecture.sh lecture05 \
+    --annotata "raw/prof/lec05_annotated.pdf" \
     --vergine "raw/prof/deckA.pdf" "raw/prof/deckB.pdf" \
-    --mine "raw/mine/mie-note-lez5.pdf"
+    --mine "raw/mine/my-notes-lec5.pdf"
 ```
 
-Prima di trascrivere, lo script costruisce da sé la mappa di coverage
-annotata↔vergine (`align/lezione05/coverage.json`, vedi
-`scripts/align_slides.sh`): **rivedila** — in particolare le pagine "inserite"
-a mano e quelle a confidenza bassa — prima di fidarti del risultato.
+</details>
 
-**M4** (soli appunti — nessun materiale del prof, solo `-Mine`/`--mine`):
+Before transcribing, the script builds an annotated↔blank **coverage map**
+(`align/lecture05/coverage.json`, see `scripts/align_slides.sh`). **Review it** —
+especially the pages that were "inserted" by hand and the low-confidence ones —
+before trusting the result.
+
+#### M4 — own notes only
+
+No professor material, only `-Mine` / `--mine`:
+
+<details>
+<summary>🪟 Windows</summary>
 
 ```powershell
-.\scripts\new_lecture.ps1 lezione01 -Mine "raw/mine/mie-note-lez1.pdf"
+.\scripts\new_lecture.ps1 lecture01 -Mine "raw/mine/my-notes-lec1.pdf"
 ```
+
+</details>
+
+<details>
+<summary>🍎 macOS / 🐧 Linux</summary>
 
 ```bash
-./scripts/new_lecture.sh lezione01 --mine "raw/mine/mie-note-lez1.pdf"
+./scripts/new_lecture.sh lecture01 --mine "raw/mine/my-notes-lec1.pdf"
 ```
 
-Qui le tue note sono l'unica fonte e vengono trattate come tali: nessun
-confronto con un materiale del prof che non esiste.
+</details>
 
-In tutti i casi lo script rasterizza (e, solo per M2, allinea), chiama Claude
-per la trascrizione e (se la lezione è già inclusa in `master.tex`) compila il
-PDF.
+Here your notes are the only source and are treated as such: there is no
+comparison against professor material that does not exist.
 
-## 5. Inserire la lezione e compilare
+#### What the script does
 
-Questo passo è **automatico**: `new_lecture` aggancia da sé la lezione appena
-trascritta a `master.tex` (aggiunge `\input{lezioni/lezione01}` in coda alle
-lezioni già presenti) e poi compila, generando `master.pdf` — apribile in VS Code.
+In every case the script converts the PDFs to images (and, for M2 only, aligns
+them), calls Claude to transcribe, and — if the lecture is already included in
+`master.tex` — compiles the PDF.
 
-Due sole eccezioni da tenere a mente:
+### Step 5. Add the lecture and compile
 
-- **La primissima lezione del corso**: non essendoci ancora nessuna lezione, lo
-  script la inserisce ma ti avvisa di controllare che finisca **sotto il
-  `\chapter{}` giusto** (l'organizzazione in capitoli la decidi tu in
-  `master.tex`, vedi i commenti lì).
-- **Ricompilare a mano**, quando serve (es. dopo aver corretto un bollino):
+This step is **automatic**: `new_lecture` hooks the newly transcribed lecture
+into `master.tex` by itself (it appends `\input{lezioni/lecture01}` after the
+lectures already there; `lezioni/` is the folder holding one `.tex` file per
+lecture) and then compiles, producing `master.pdf`, which you can
+open in VS Code.
 
-  ```powershell
+Only two things to keep in mind:
+
+- **The very first lecture of the course.** Since there are no lectures yet, the
+  script inserts it but warns you to check that it ends up **under the right
+  `\chapter{}`** (you decide the chapter organization in `master.tex`; see the
+  comments there).
+- **Recompiling by hand**, when needed (e.g. after fixing a marker):
+
+  ```
   latexmk master.tex
   ```
 
-## 6. Leggere i bollini e correggere
+### Step 6. Read the markers and fix them
 
-- 🔴 **rosso** (`\revisione`): Claude non era sicuro di una formula o un
-  passaggio. Controlla il materiale originale e correggi il `.tex`.
-- 🔵 **blu** (`\figura`): un disegno del professore da inserire a mano — vedi
-  `.claude/docs/gestione-figure.md`.
+- 🔴 **Red** (`\revisione`, *"review"*): Claude was not sure about a formula or a
+  step. Check the original material and correct the `.tex`.
+- 🔵 **Blue** (`\figura`, *"figure"*): a drawing by the professor to insert by
+  hand — see `.claude/docs/gestione-figure.md` (*"figure management"*).
 
-I bollini rossi non sono errori da nascondere: sono avvisi onesti. Meglio un
-bollino in più che una formula sbagliata mimetizzata nel testo.
-
----
-
-# Consigli
-
-- Materiale leggibile in ingresso = meno bollini rossi in uscita.
-- Fai prima `/course-setup`, poi il profilo, poi le lezioni: saltarli fa
-  trascrivere con i flag sbagliati o con notazione "a caso", e si perde più
-  tempo dopo a correggere.
-- Una lezione alla volta: controlla e correggi i bollini prima di passare alla
-  successiva.
-- Non sistemare l'impaginazione durante la scrittura: solo a dispensa completa
-  (vedi `CLAUDE.md`).
-- Il template può ricevere migliorie: ogni tanto guarda la pagina GitHub del
-  progetto. Poiché la tua copia nasce da «Use this template», non è collegata
-  all'originale: aggiornarla **non è automatico** (hai modificato
-  `CLAUDE.md`, `master.tex`, `lezioni/`): se c'è una novità che ti serve,
-  chiedi a Claude Code di riportarla nella tua copia senza toccare il tuo
-  materiale.
+Red markers are not errors to hide: they are honest warnings. Better one marker
+too many than a wrong formula disguised as text.
 
 ---
 
-# Problemi comuni
+## Tips
 
-| Sintomo | Cosa fare |
+- Readable input material = fewer red markers in the output.
+- Do `/course-setup` first, then the professor profile, then the lectures. Skipping
+  them makes Claude transcribe with the wrong flags or with "random" notation, and
+  you lose more time correcting it later.
+- One lecture at a time: check and fix the markers before moving to the next.
+- Don't fix page layout while writing: only when the notes are complete (see
+  `CLAUDE.md`).
+- The template may receive improvements: check the project's GitHub page from time
+  to time. Because your copy comes from "Use this template", it is not linked to the
+  original, so updating it is **not automatic** (you have modified `CLAUDE.md`,
+  `master.tex`, `lezioni/`). If there is a new feature you need, ask Claude Code
+  to port it into your copy without touching your material.
+
+---
+
+## Troubleshooting
+
+| Symptom | What to do |
 |---|---|
-| `claude` "non riconosciuto" | Chiudi e riapri il terminale; se persiste, riavvia il PC. |
-| `perl` "non riconosciuto per eseguire latexmk" | installa perl da `https://www.perl.org/get.html` |
-| `latexmk`/`pdftoppm` "non riconosciuto" (Windows) | Riavvia il PC (carica il PATH di MiKTeX) e riprova. |
-| `pdftoppm: command not found` (Mac) | Manca Poppler: `brew install poppler`, poi riapri il Terminale. |
-| Lo script `.ps1` viene bloccato (Windows) | Manca il passo 6.3 (`Set-ExecutionPolicy … RemoteSigned`). |
-| `./scripts/…​.sh: Permission denied` (Mac) | Manca il passo 6.3: `chmod +x scripts/*.sh`. |
-| Claude Code chiede login e non parte | Serve un abbonamento a pagamento; il piano gratuito non basta. |
-| La prima compilazione si blocca o chiede pacchetti | MiKTeX sta scaricando i pacchetti mancanti: accetta e aspetta. |
-| Il bollino blu resta anche dopo aver creato la figura | Ricompila con `latexmk -g -pdf master.tex` (una volta per figura nuova). |
+| `claude` "not recognized" | Close and reopen the terminal; if it persists, restart the PC. |
+| `perl` "not recognized" when running `latexmk` | Install perl from <https://www.perl.org/get.html>. |
+| `latexmk` / `pdftoppm` "not recognized" (Windows) | Restart the PC (loads the MiKTeX PATH) and try again. |
+| `pdftoppm: command not found` (Mac) | Poppler is missing: `brew install poppler`, then reopen Terminal. |
+| The `.ps1` script is blocked (Windows) | Installation step 6.3 is missing (`Set-ExecutionPolicy … RemoteSigned`). |
+| `./scripts/….sh: Permission denied` (Mac) | Installation step 6.3 is missing: `chmod +x scripts/*.sh`. |
+| Claude Code asks for login and won't start | A paid subscription is required; the free plan is not enough. |
+| The first compilation hangs or asks for packages | MiKTeX is downloading missing packages: accept and wait. |
+| The blue marker stays even after creating the figure | Recompile with `latexmk -g -pdf master.tex` (once per new figure). |
 
-Per sapere in un colpo solo cosa manca fra gli strumenti del template:
-`.\scripts\check_setup.ps1` (Windows) o `./scripts/check_setup.sh` (Mac). Per un
-controllo dedicato a Claude Code: `claude doctor`.
-
----
-
-# Struttura del progetto
-
-- `master.tex` — file principale: titolo, indici, elenco delle lezioni.
-- `preamble.tex` — pacchetti, notazioni, ambienti (di norma non si tocca).
-- `CLAUDE.md` — convenzioni del corso, lette in automatico da Claude Code.
-- `lezioni/` — un file `.tex` per lezione.
-- `figure/fig/` — i disegni, divisi per categoria.
-- `raw/prof/`, `raw/mine/` — i tuoi PDF sorgenti (restano solo sul tuo computer, non versionati).
-- `align/` — solo modello M2: mappe di coverage annotata↔vergine generate da
-  `align_slides.{sh,ps1}` (ignorata da git, si rigenera a ogni lezione M2).
-- `scripts/` — `.ps1` per Windows, `.sh` per Mac/Linux.
-- `.claude/skills/`, `.claude/docs/` — le skill (`/course-setup`,
-  `/professor-profile`, `/lecture-transcribe`, `/figure-classify`) e la
-  documentazione interna.
+To see at a glance what is missing among the template's tools, run
+`.\scripts\check_setup.ps1` (Windows) or `./scripts/check_setup.sh` (Mac). For a
+check dedicated to Claude Code: `claude doctor`.
 
 ---
 
-# Feedback 
+## Project structure
 
+> Some folder, file and macro names are in Italian because the scripts and
+> `CLAUDE.md` rely on them. **Do not rename them**, or the scripts will stop
+> working. Translations are given below.
 
-Il progetto è giovane e ogni riscontro serve, anche piccolo. Raccontalo
-direttamente a chi ti ha passato il progetto, in chat o a voce: non serve
-scrivere niente di formale.
+| Italian name | English meaning |
+|---|---|
+| `lezioni/` | lectures |
+| `figure/fig/` | figures (drawings) |
+| `raw/prof/`, `raw/mine/` | professor's material, your own notes |
+| `\revisione`, `\figura` | "review" marker, "figure" marker |
+| `gestione-figure.md` | figure management guide |
+| "Modello del materiale" | material model (section of `CLAUDE.md`) |
+| "Profilo del professore" | professor profile (section of `CLAUDE.md`) |
 
-Cosa ci interessa di più:
+- `master.tex` — main file: title, indexes, list of lectures.
+- `preamble.tex` — packages, notation, environments (normally left untouched).
+- `CLAUDE.md` — course conventions, read automatically by Claude Code.
+- `lezioni/` — one `.tex` file per lecture.
+- `figure/fig/` — the drawings, divided by category.
+- `raw/prof/`, `raw/mine/` — your source PDFs (they stay on your computer only,
+  not versioned).
+- `align/` — model M2 only: annotated↔blank coverage maps generated by
+  `align_slides.{sh,ps1}` (ignored by git, regenerated for every M2 lecture).
+- `scripts/` — `.ps1` for Windows, `.sh` for Mac/Linux.
+- `.claude/skills/`, `.claude/docs/` — the skills (`/course-setup`,
+  `/professor-profile`, `/lecture-transcribe`, `/figure-classify`) and the
+  internal documentation.
 
-- Sei riuscito a installare tutto seguendo solo il README? Dove ti sei fermato?
-- Quanto tempo ti è servito dal download alla prima lezione trascritta?
-- Quanti bollini rossi (`\revisione`) hai trovato in una lezione, e quanti
-  erano davvero errori?
-- Che tipo di materiale ha il tuo corso (slide, lavagna, solo appunti)? Il
-  modello M1–M4 che `/course-setup` ha scelto ti è sembrato giusto?
-- Cosa ti ha confuso, cosa toglieresti, cosa ti aspettavi e non c'era?
+---
+
+## Feedback
+
+The project is young and every bit of feedback helps, however small. Please open
+an **Issue** on the project's GitHub page — nothing formal is needed, a couple of
+lines are enough.
+
+What we care about most:
+
+- Did you manage to install everything following the README alone? Where did you
+  get stuck?
+- How long did it take from download to your first transcribed lecture?
+- How many red markers (`\revisione`) did you find in a lecture, and how many were
+  real errors?
+- What kind of material does your course have (slides, blackboard, notes only)?
+  Did the M1–M4 model chosen by `/course-setup` feel right?
+- What confused you, what would you remove, what did you expect that wasn't
+  there?
